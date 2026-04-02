@@ -13,6 +13,18 @@ CORS(app)
 
 
 def get_db_uri():
+    database_url = os.getenv("DATABASE_URL", "").strip()
+    if database_url:
+        if database_url.startswith("mysql://"):
+            return database_url.replace("mysql://", "mysql+pymysql://", 1)
+        return database_url
+
+    mysql_public_url = os.getenv("MYSQL_PUBLIC_URL", "").strip()
+    if mysql_public_url:
+        if mysql_public_url.startswith("mysql://"):
+            return mysql_public_url.replace("mysql://", "mysql+pymysql://", 1)
+        return mysql_public_url
+
     host = os.getenv("DB_HOST", "localhost")
     port = os.getenv("DB_PORT", "3306")
     name = os.getenv("DB_NAME", "student_retention")
