@@ -29,6 +29,11 @@ db = SQLAlchemy(app)
 RETENTION_ALERT_THRESHOLD = float(os.getenv("RETENTION_ALERT_THRESHOLD", "50"))
 
 
+def initialize_database():
+    with app.app_context():
+        db.create_all()
+
+
 class RetentionRecord(db.Model):
     __tablename__ = "retention_data"
 
@@ -546,7 +551,9 @@ def dashboard_kpis():
     )
 
 
+initialize_database()
+
+
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
+ 
