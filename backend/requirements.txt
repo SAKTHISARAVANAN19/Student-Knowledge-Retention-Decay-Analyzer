@@ -5,3 +5,4 @@ PyMySQL
 SQLAlchemy
 Werkzeug
 gunicorn
+cryptography
