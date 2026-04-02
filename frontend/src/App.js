@@ -204,6 +204,50 @@ function App() {
     }
   }, [user, view, loadRecords]);
 
+  const refreshCurrentViewData = useCallback(() => {
+    if (!user) return;
+
+    if (view === "records") {
+      loadRecords({
+        course: recordsCourseFilter,
+        level: recordsLevelFilter,
+        student: recordsStudentFilter,
+        from_date: recordsFromDate,
+        to_date: recordsToDate,
+      });
+      return;
+    }
+
+    if (view === "home" || view === "dashboard") {
+      loadKpis();
+    }
+  }, [
+    user,
+    view,
+    loadKpis,
+    loadRecords,
+    recordsCourseFilter,
+    recordsLevelFilter,
+    recordsStudentFilter,
+    recordsFromDate,
+    recordsToDate,
+  ]);
+
+  useEffect(() => {
+    refreshCurrentViewData();
+  }, [refreshCurrentViewData]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+
+    const handleWindowFocus = () => {
+      refreshCurrentViewData();
+    };
+
+    window.addEventListener("focus", handleWindowFocus);
+    return () => window.removeEventListener("focus", handleWindowFocus);
+  }, [user, refreshCurrentViewData]);
+
   const lookupExisting = async (form) => {
     const studentId = form?.student_id?.value;
     const name = form?.name?.value?.trim();
