@@ -34,6 +34,14 @@ def get_db_uri():
     return f"mysql+pymysql://{user}:{quoted_password}@{host}:{port}/{name}"
 
 
+def get_db_source_label():
+    if os.getenv("DATABASE_URL", "").strip():
+        return "DATABASE_URL"
+    if os.getenv("MYSQL_PUBLIC_URL", "").strip():
+        return "MYSQL_PUBLIC_URL"
+    return "DB_*"
+
+
 app.config["SQLALCHEMY_DATABASE_URI"] = get_db_uri()
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -96,6 +104,32 @@ def needs_intervention(retention):
 @app.route("/")
 def home():
     return "Flask is running"
+
+
+@app.route("/health/db", methods=["GET"])
+def health_db():
+    try:
+        user_count = User.query.count()
+        record_count = RetentionRecord.query.count()
+        return jsonify(
+            {
+                "status": "ok",
+                "db_source": get_db_source_label(),
+                "users_count": user_count,
+                "retention_records_count": record_count,
+            }
+        )
+    except Exception as exc:
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "db_source": get_db_source_label(),
+                    "message": str(exc),
+                }
+            ),
+            500,
+        )
 
 
 @app.route("/analyze", methods=["POST"])
