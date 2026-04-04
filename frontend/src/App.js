@@ -25,6 +25,53 @@ function getStoredUser() {
   return null;
 }
 
+function PasswordField({ name, value, defaultValue, onChange, placeholder, required, style, readOnly = false }) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div style={{ position: "relative" }}>
+      <input
+        name={name}
+        value={value}
+        defaultValue={defaultValue}
+        onChange={onChange}
+        type={visible ? "text" : "password"}
+        placeholder={placeholder}
+        required={required}
+        readOnly={readOnly}
+        style={{ ...style, paddingRight: "44px" }}
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((prev) => !prev)}
+        aria-label={visible ? "Hide password" : "Show password"}
+        title={visible ? "Hide password" : "Show password"}
+        style={{
+          position: "absolute",
+          top: "50%",
+          right: "10px",
+          transform: "translateY(-50%)",
+          border: "none",
+          background: "transparent",
+          padding: 0,
+          margin: 0,
+          cursor: "pointer",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: style?.color || "#6b7280",
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+          <circle cx="12" cy="12" r="3" />
+          {visible ? null : <path d="M4 20 20 4" />}
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 function App() {
   const storedUser = getStoredUser();
   const [result, setResult] = useState(null);
@@ -841,9 +888,8 @@ function App() {
                     }}
                   />
                   <div style={{ height: "8px" }} />
-                  <input
+                  <PasswordField
                     name="password"
-                    type="password"
                     placeholder="Password"
                     required
                     style={{
@@ -930,9 +976,8 @@ function App() {
                     }}
                   />
                   <div style={{ height: "8px" }} />
-                  <input
+                  <PasswordField
                     name="password"
-                    type="password"
                     placeholder="Password"
                     required
                     style={{
@@ -973,11 +1018,11 @@ function App() {
                     e.preventDefault();
                     setAuthError("");
                     setAuthInfo("");
-                  const payload = {
-                    email: e.target.email.value.trim(),
-                    current_password: e.target.current_password.value,
-                    new_password: e.target.new_password.value,
-                  };
+                    const payload = {
+                      email: e.target.email.value.trim(),
+                      current_password: e.target.current_password.value,
+                      new_password: e.target.new_password.value,
+                    };
 
                     try {
                       const response = await fetch(`${API_URL}/forgot-password`, {
@@ -1019,9 +1064,8 @@ function App() {
                     }}
                   />
                   <div style={{ height: "8px" }} />
-                  <input
+                  <PasswordField
                     name="current_password"
-                    type="password"
                     placeholder="Current Password"
                     required
                     style={{
@@ -1032,9 +1076,8 @@ function App() {
                     }}
                   />
                   <div style={{ height: "8px" }} />
-                  <input
+                  <PasswordField
                     name="new_password"
-                    type="password"
                     placeholder="New Password"
                     required
                     style={{
@@ -1339,9 +1382,9 @@ function App() {
                     style={{ ...formInputStyle, background: colors.panel, cursor: "not-allowed" }}
                   />
                   <div style={{ height: "10px" }} />
-                  <input name="current_password" type="password" placeholder="Current Password" style={formInputStyle} />
+                  <PasswordField name="current_password" placeholder="Current Password" style={formInputStyle} />
                   <div style={{ height: "10px" }} />
-                  <input name="new_password" type="password" placeholder="New Password" style={formInputStyle} />
+                  <PasswordField name="new_password" placeholder="New Password" style={formInputStyle} />
                   <div style={{ height: "14px" }} />
                   <button type="submit" style={formButtonStyle}>Update Profile</button>
                 </form>
