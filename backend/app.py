@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 import os
+import time
 import urllib.parse
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -44,14 +45,40 @@ def get_db_source_label():
 
 app.config["SQLALCHEMY_DATABASE_URI"] = get_db_uri()
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 280,
+    "connect_args": {
+        "connect_timeout": 20,
+        "read_timeout": 60,
+        "write_timeout": 60,
+    },
+}
 
 db = SQLAlchemy(app)
 RETENTION_ALERT_THRESHOLD = float(os.getenv("RETENTION_ALERT_THRESHOLD", "50"))
 
 
-def initialize_database():
-    with app.app_context():
-        db.create_all()
+def initialize_database(retries=3, delay=3, fail_fast=False):
+    for attempt in range(1, retries + 1):
+        try:
+            with app.app_context():
+                db.create_all()
+            print("Database initialization completed.", flush=True)
+            return True
+        except Exception as exc:
+            print(
+                f"Database initialization failed "
+                f"(attempt {attempt}/{retries}): {exc}",
+                flush=True,
+            )
+            db.session.remove()
+            if attempt < retries:
+                time.sleep(delay)
+
+    if fail_fast:
+        raise RuntimeError("Database initialization failed after retries.")
+    return False
 
 
 class RetentionRecord(db.Model):
@@ -130,6 +157,15 @@ def health_db():
             ),
             500,
         )
+
+
+@app.route("/init-db", methods=["GET", "POST"])
+def init_db():
+    initialized = initialize_database(retries=5, delay=2)
+    status = "ok" if initialized else "error"
+    return jsonify({"status": status, "db_source": get_db_source_label()}), (
+        200 if initialized else 500
+    )
 
 
 @app.route("/analyze", methods=["POST"])
